@@ -1,6 +1,7 @@
 FROM php:7.4-fpm-alpine
 RUN apk add --no-cache nginx supervisor
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+RUN echo "===== NGINX MAIN CONFIG ====="; cat /etc/nginx/nginx.conf; echo "===== OUR SERVER BLOCK ====="; cat /etc/nginx/conf.d/default.conf; echo "===== WWW FILES ====="; ls -la /var/www/; echo "===== NGINX TEST ====="; nginx -t
 RUN sed -i 's/listen = 9000/listen = 127.0.0.1:9000/' /usr/local/etc/php-fpm.d/www.conf
 COPY supervisord.conf /etc/supervisor.conf
 COPY . /var/www/
