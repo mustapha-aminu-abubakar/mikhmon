@@ -1,10 +1,11 @@
 FROM php:7.4-fpm-alpine
 RUN apk add --no-cache nginx supervisor
+RUN rm -f /etc/nginx/http.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-RUN sed -i 's/fastcgi_pass php_7_4:9000;/fastcgi_pass 127.0.0.1:9000;/' /etc/nginx/conf.d/default.conf
+RUN sed -i 's/listen = 9000/listen = 127.0.0.1:9000/' /usr/local/etc/php-fpm.d/www.conf
 COPY supervisord.conf /etc/supervisor.conf
 COPY . /var/www/
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh && rm -f /var/www/docker-compose.yml
+RUN chmod +x /entrypoint.sh && chown -R nginx:nginx /var/www/ && rm -f /var/www/docker-compose.yml
 EXPOSE 80
 CMD ["/entrypoint.sh"]
