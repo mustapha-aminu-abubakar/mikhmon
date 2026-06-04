@@ -5,6 +5,7 @@ RUN sed -i 's/listen = 9000/listen = 127.0.0.1:9000/' /usr/local/etc/php-fpm.d/w
 COPY supervisord.conf /etc/supervisor.conf
 COPY . /var/www/
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh && chown -R nginx:nginx /var/www/ && rm -f /var/www/docker-compose.yml
+RUN chmod +x /entrypoint.sh
+RUN chown -R nginx:nginx /var/www/ && rm -f /var/www/docker-compose.yml
 EXPOSE 80
 CMD ["/entrypoint.sh"]
