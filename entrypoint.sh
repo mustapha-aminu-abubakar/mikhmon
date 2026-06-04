@@ -63,4 +63,6 @@ EOF
   fi
 fi
 
+echo "===== WWW FILES ====="; ls -la /var/www/; echo "===== NGINX CONF ====="; cat /etc/nginx/nginx.conf; echo "===== NGINX TEST ====="; nginx -t
+
 exec /usr/bin/supervisord -c /etc/supervisor.conf
