@@ -41,6 +41,14 @@ docker-compose down
 
 Standalone: PHP 7.4+ with any web server (nginx config in `nginx.conf`). Just serve the directory.
 
+## Render deployment
+
+Free-tier deploy via Docker. Uses `Dockerfile`, `entrypoint.sh`, `supervisord.conf`.
+
+Set `GENERATE_CONFIG=true` and supply `ROUTER_IP`, `ROUTER_PASS` as env vars — entrypoint generates `include/config.php` at boot. Settings changed in the UI survive until the next deploy (config regenerates from env vars). Logo uploads are ephemeral; use `LOGO_URL` env var to pull from an external URL.
+
+Env vars are the source of truth. To change config, update Render env vars and redeploy.
+
 ## Key quirks
 
 - `include/config.php` is both config file and writable target — saving settings in the UI rewrites this PHP file via `str_replace` on delimiter patterns. **Do not manually reformat this file.**
