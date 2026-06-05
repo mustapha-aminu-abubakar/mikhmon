@@ -1,29 +1,27 @@
 #!/bin/sh
 set -e
 
-if [ "$GENERATE_CONFIG" = "true" ]; then
-  ADMIN_USER="${ADMIN_USER:-mikhmon}"
-  ADMIN_PASS="${ADMIN_PASS:-1234}"
-  SESSION_NAME="${SESSION_NAME:-mikrotik}"
-  ROUTER_IP="${ROUTER_IP:-}"
-  ROUTER_USER="${ROUTER_USER:-admin}"
-  ROUTER_PASS="${ROUTER_PASS:-}"
-  HOTSPOT_NAME="${HOTSPOT_NAME:-MikroTik}"
-  DNS_NAME="${DNS_NAME:-}"
-  CURRENCY="${CURRENCY:-Rp}"
-  AUTO_RELOAD="${AUTO_RELOAD:-10}"
-  INTERFACE="${INTERFACE:-1}"
-  INFO_LINE="${INFO_LINE:-}"
-  IDLE_TIMEOUT="${IDLE_TIMEOUT:-10}"
-  LIVE_REPORT="${LIVE_REPORT:-disable}"
-  QR_BT="${QR_BT:-disable}"
-  LOGO_URL="${LOGO_URL:-}"
+echo "=== entrypoint: starting config generation ==="
+echo "GENERATE_CONFIG=${GENERATE_CONFIG:-unset}"
 
-  if [ -z "$ROUTER_IP" ] || [ -z "$ROUTER_PASS" ]; then
-    echo "ERROR: ROUTER_IP and ROUTER_PASS env vars are required when GENERATE_CONFIG=true"
-    exit 1
-  fi
+ADMIN_USER="${ADMIN_USER:-mikhmon}"
+ADMIN_PASS="${ADMIN_PASS:-1234}"
+SESSION_NAME="${SESSION_NAME:-mikrotik}"
+ROUTER_IP="${ROUTER_IP:-}"
+ROUTER_USER="${ROUTER_USER:-admin}"
+ROUTER_PASS="${ROUTER_PASS:-}"
+HOTSPOT_NAME="${HOTSPOT_NAME:-MikroTik}"
+DNS_NAME="${DNS_NAME:-}"
+CURRENCY="${CURRENCY:-Rp}"
+AUTO_RELOAD="${AUTO_RELOAD:-10}"
+INTERFACE="${INTERFACE:-1}"
+INFO_LINE="${INFO_LINE:-}"
+IDLE_TIMEOUT="${IDLE_TIMEOUT:-10}"
+LIVE_REPORT="${LIVE_REPORT:-disable}"
+QR_BT="${QR_BT:-disable}"
+LOGO_URL="${LOGO_URL:-}"
 
+if [ -n "$ROUTER_IP" ] && [ -n "$ROUTER_PASS" ]; then
   INFO_HEX=$(printf '%s' "$INFO_LINE" | php -r 'echo bin2hex(stream_get_contents(STDIN));')
   ADMIN_ENC=$(printf '%s' "$ADMIN_PASS" | php -r '
     require "/var/www/lib/routeros_api.class.php";
@@ -52,15 +50,24 @@ if(substr(\$_SERVER["REQUEST_URI"], -10) == "config.php"){header("Location:./");
   '11'=>'$SESSION_NAME@!@$LIVE_REPORT'
 );
 EOF
+  echo "=== entrypoint: config.php generated with session '$SESSION_NAME' ==="
+else
+  cat > /var/www/include/config.php <<EOF
+<?php
+if(substr(\$_SERVER["REQUEST_URI"], -10) == "config.php"){header("Location:./");};
+\$data['mikhmon'] = array ('1'=>'mikhmon<|<$ADMIN_USER','mikhmon>|>$ADMIN_ENC');
+EOF
+  echo "=== entrypoint: ROUTER_IP/ROUTER_PASS not set, generated minimal config ==="
+fi
 
-  cat > /var/www/include/quickbt.php <<EOF
+cat > /var/www/include/quickbt.php <<EOF
 <?php \$qrbt="$QR_BT";?>
 EOF
 
-  mkdir -p /var/www/img
-  if [ -n "$LOGO_URL" ]; then
-    wget -q -O /var/www/img/logo.png "$LOGO_URL" || true
-  fi
+mkdir -p /var/www/img
+if [ -n "$LOGO_URL" ]; then
+  wget -q -O /var/www/img/logo.png "$LOGO_URL" || true
 fi
 
+echo "=== entrypoint: done, starting supervisord ==="
 exec /usr/bin/supervisord -c /etc/supervisor.conf
